@@ -1,34 +1,36 @@
 package com.alex.dao;
 
-import com.alex.model.User;
+import com.alex.model.Users;
+import com.alex.utils.HibernateSessionFactoryUtil;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import org.hibernate.query.Query;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class UserDAO implements UserDAOInterf{
+public class UserDAO implements UserDAOInt {
 
-    public List<User> userList=new ArrayList<>();
-
-    public boolean addUser(User user){
-        for (User user1: userList) {
-            if (user1.getLogin().equals(user.getLogin()) && user1.getPassword().equals(user.getPassword())) {
-                return false;
-            }
+    public void addUser(Users user){
+        Session session= HibernateSessionFactoryUtil.getSessionFactory().openSession();
+        Transaction transaction=session.beginTransaction();
+        Query query=session.createQuery("from users where login=:login and password=:password"); // When create query for select from table, need use name of table how name of entity
+        query.setParameter("login", user.getLogin());
+        query.setParameter("password", user.getPassword());
+        if(query.list().isEmpty()){
+            session.save(user);
         }
-        System.out.println("|||||||||||||||||||||||||||||||||||||||||||||||||||"+user.getId());
-        user.setId(userList.size()+1);
-        return userList.add(user);
+        transaction.commit();
+        session.close();
     }
 
-    public User getUserByLoginPassword(String login, String password){
-        User result =new User();
-        result.setId(-1);
-        for (User user:userList) {
-            if(user.getLogin().equals(login) && user.getPassword().equals(password)){
-                result=user;
-            }
-        }
-        return result;
+    public boolean getUserByLoginPassword(String login, String password){
+        Session session=HibernateSessionFactoryUtil.getSessionFactory().openSession();
+        Query query=session.createQuery("from users where login=:login and password=:password");
+        query.setParameter("login", login);
+        query.setParameter("password", password);
+        boolean res=!query.list().isEmpty();
+        session.close();
+        return res;
     }
 
 
